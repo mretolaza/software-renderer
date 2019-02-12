@@ -144,6 +144,7 @@ class Bitmap(object):
         newB = math.floor(b*255)
 
         self.newGlColor = color(newR, newG, newB)
+        return self.newGlColor
 
     def point(self, x, y, color):
         self.framebuffer[y][x] = color
@@ -174,10 +175,8 @@ class Bitmap(object):
         while (x2  + 1) >= count:
             if steep:    
                 self.point(y, count, self.newGlColor)
-           #     print(self.framebuffer)
             else: 
                 self.point(count, y, self.newGlColor)
-            #    print(self.framebuffer)
             offset += dy
             if offset >= threshold: 
                 y += 1 if y1 < y2 else -1 
