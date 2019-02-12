@@ -1,11 +1,5 @@
-"""Librerías Internas 
-""" 
-
 import struct
-import random
-from math import sqrt
-from math import ceil
-from random import randint
+import math
 
 def char(c):
     return struct.pack("=c", c.encode('ascii'))
@@ -16,7 +10,7 @@ def word(c):
 def dword(c):
     return struct.pack("=l", c)
 
-def getColor(r, g, b):
+def color(r, g, b):
     return bytes([b, g, r])
 
 class Bitmap(object):
@@ -24,18 +18,10 @@ class Bitmap(object):
         self.width = width
         self.height = height
         self.framebuffer = []
-        self.r = 0
-        self.g = 0
-        self.b = 0 
-        self.vpWidth = 0
-        self.vpHeight = 0
-        self.vpX = 0 
-        self.vpY = 0 
-        self.vr = 0
-        self.vg = 0
-        self.vb = 0
+        self.newGlColor = color(255, 255, 255)
         self.clear()
-    
+       
+
     #structure image file 
     def writeFile(self, filename):
         f = open(filename, "wb")
@@ -77,139 +63,92 @@ class Bitmap(object):
         # close file
         f.close()
     
-    def setColor(self, r,g,b): 
-        self.vr = r
-        self.vg = g 
-        self.vb = b 
-
     # Clear image 
     def clear(self):
         self.framebuffer = [
             [
                 #show background color 
-                getColor(self.r,self.g,self.b) for x in range(self.width)
+                self.clearColor(0,0,0) for x in range(self.width)
             ]
             for y in range(self.height)
         ]
 
     #clear the canvas with a new color 
-    def clearColor(self, newR, newG, newB):
-        self.r = ceil(newR*255)
-        self.g = ceil(newG*255)
-        self.b = ceil(newB*255) 
+    def clearColor(self, r, g, b): 
+        newR = math.floor(r*255)
+        newG = math.floor(g*255)
+        newB = math.floor(b*255)
+
+        self.framebuffer = [
+            [color(newR, newG, newB) for x in range(self.width)]
+            for y in range(self.height)
+        ]
 
     # get dimension image (begin of glViewPort)
     def viewPort(self, x, y, width, height):
-        if height <= 0 or width <= 0:
-            print('Error, el Largo y el Ancho de la imágen deben de ser valores mayores a 0')
-            input()
-        elif x< 0 or y < 0 or x > self.width or y > self.height:
-            print('Error, Las coordenadas ingresadas (x,y) deben de ser mayores a 0. Además deben de ser menores al ancho y largo de la imagen')
-            input()
-        else:  
-            self.vpWidth = width
-            self.vpHeight = height
-            self.vpX = x 
-            self.vpY = y 
+        self.viewPortWidth = width
+        self.viewPortHeight = height
+        self.xViewPort = x
+        self.yViewPort = y
+    
+    def getRXCoord(self, x):
+        dx = x * (self.viewPortWidth / 2)
+        realXVP = (self.viewPortWidth / 2) + dx
+        realX = realXVP + self.xViewPort
+        return realX
+
+    def getRYCoord(self, y):
+        dy = y * (self.viewPortHeight / 2)
+        realYVP = (self.viewPortHeight / 2) + dy
+        realY = realYVP + self.yViewPort
+        return realY
+
+    def getNormXCoord(self, realX):
+        realXVP = realX - self.xViewPort
+        dx = realXVP - (self.viewPortWidth / 2)
+        x = dx / (self.viewPortWidth / 2)
+        return x
+
+    def getNormYCoord(self, realY):
+        realYVP = realY - self.yViewPort
+        dy = realYVP - (self.viewPortHeight / 2)
+        y = dy / (self.viewPortHeight / 2)
+        return y
 
     # create new canvas to draw image 
-    def vertex(self, x, y): 
-        pointSize = 10
-        if self.vpHeight !=  0 or self.vpWidth != 0:
-            xx = x * ((self.vpWidth - pointSize) / 2)
-            yy = y * ((self.vpHeight - pointSize) / 2)
-            localX = self.vpX+int((self.vpWidth - pointSize)/2)+int(xx)
-            localY = self.vpY+int((self.vpHeight - pointSize)/2)+int(yy)
-            print(x, y, localX, localY)
-            for x in range(pointSize):
-                for y in range(pointSize):
-                    self.point(localX + x, localY + y)
-        else: 
-            print('Debe de ejecutar glViewPort para obtener un área a gráficar')
+    def vertex(self, x, y):
+        if ((x >= -1 and x <= 1) and (y >= -1 and y <= 1)):
+            # x           
+            dx = x * (self.viewPortWidth / 2)
+            realXVP = (self.viewPortWidth / 2) + dx
 
-    # Create point in framebuffer
-    def point(self, x, y):
-        self.framebuffer[y][x] = getColor(self.vr, self.vg, self.vb)
+            # y
+            dy = y * (self.viewPortHeight / 2)
+            realYVP = (self.viewPortHeight / 2) + dy
 
-    # Set random white and black
-    def random(self):
-        whiteColor = [255, 255, 255]
-        blackColor = [0,0,0]
-        for y in range(self.height):
-            for x in range(self.width):
-                self.setColor(*random.choice([whiteColor, blackColor]))
-                self.point(x, y)
+            # Add new viewports 
+            realX = realXVP + self.xViewPort
+            realY = realYVP + self.yViewPort       
 
-    # Set random color
-    def randomColor(self):
-        for y in range(self.height):
-            for x in range(self.width):
-                self.setColor(randint(0,255), randint(0,255), randint(0,255))
-                self.point(x, y)
+            # draw inside dimensions 
+            if ((realX <= self.width) and (realY <= self.height)):
+                if (realX == self.width):
+                    realX = self.width - 1
+                if (realY == self.height): 
+                    realY = self.height - 1
+                self.framebuffer[math.floor(realY)][math.floor(realX)] = self.newGlColor
 
-    # draw left line
-    def drawLeftLine(self,padding):
-        x = padding
-        for y in range(padding, self.vpHeight - padding):
-            self.point(x, y)
-    
-    # draw rigth line
-    def drawRightLine(self,padding):
-        x = self.vpWidth - padding
-        for y in range(padding, self.vpHeight - padding):
-            self.point(x, y)
+    def color(self, r, g, b):
+        newR = math.floor(r*255)
+        newG = math.floor(g*255)
+        newB = math.floor(b*255)
 
-    # draw top line
-    def drawTopLine(self,padding):
-        y = padding
-        for x in range(padding, self.vpWidth - padding):
-            self.point(x, y)
+        self.newGlColor = color(newR, newG, newB)
 
-    # draw botton line
-    def drawBottonLine(self,padding):
-        y = self.vpHeight - padding
-        for x in range(padding, self.vpWidth - padding):
-            self.point(x, y)
+    def point(self, x, y, color):
+        self.framebuffer[y][x] = color
 
-    # Create square 
-    def square(self, size):
-        cordX = int((self.vpWidth / 2)) - int(size / 2)
-        cordY = int((self.vpWidth / 2)) - int(size / 2)
-        for x in range (cordX, cordX + size):
-            for y in range (cordY, cordY + size):
-                self.point(x,y)
-
-    # draw Slash
-    def drawSlash(self):
-        for cord in range(self.vpX, self.vpWidth):
-            self.point(cord, cord)
-
-    # stars
-    def stars(self, numOfStars):
-        loop = 0
-        while(loop < numOfStars):
-            loop = loop + 1
-            size = randint(1, 3)
-            x = randint(0, self.vpWidth - size - 2)
-            y = randint(0, self.vpHeight - size - 2)
-            self.printStar(x, y, size)
-
-    # print starts 
-    def printStar(self, x, y, size):
-        for cordX in range(size):
-            for cordY in range(size):
-                self.point(cordX + x, cordY + y)
-
-    #line custom 
-    def lineCustom(self, x1 , y1 , x2 , y2):
-        i = 0 
-        while i <= 1:
-            x = x1 + (x2 - x1) * i 
-            y = y1 + (y2 - y1) * i 
-            self.point( round(x) , round(y))
-            i += 0.01 
-
-    def line (self, x1, y1, x2, y2): 
+    def line (self, x1, y1, x2, y2, color = None): 
         dy = abs(y2 - y1) 
         dx = abs(x2 - x1) 
 
@@ -232,11 +171,10 @@ class Bitmap(object):
         y = y1 
         for x in range (x1, x2 + 1):
             if steep: 
-                self.point(y, x)
+                self.point(y, x, color)
             else: 
-                self.point(x, y)
+                self.point(x, y, color)
             offset += dy
             if offset >= threshold: 
                 y += 1 if y1 < y2 else -1 
                 threshold += 1 * 2 * dx
-
