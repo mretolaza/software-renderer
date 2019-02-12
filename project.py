@@ -14,13 +14,11 @@ def glInit():
 #Init FrameBuffer
 def glCreateWindow(width, height):
     global img 
-    img = Bitmap(width,height)
-    return img 
+    img = Bitmap(width,height) 
 
 #Delete actual image 
 def glClear(): 
     img.clear()
-
 #Image area can draw
 def glViewPort(x,y,widht, height):
     img.viewPort(x,y,widht, height)
@@ -48,6 +46,8 @@ glCreateWindow(800,400)
 glViewPort(0,0,300,300)
 glClear()
 glColor(1, 0, 0)
-glVertex(0,0)
-glLine(0,0,1,1)
+#"glVertex(0,0)
+#glLine(299,200,100,100)
+#print(type(img))
+glClear()
 glFinish()

@@ -148,7 +148,8 @@ class Bitmap(object):
     def point(self, x, y, color):
         self.framebuffer[y][x] = color
 
-    def line (self, x1, y1, x2, y2, color = None): 
+    def line (self, x1, y1, x2, y2): 
+        
         dy = abs(y2 - y1) 
         dx = abs(x2 - x1) 
 
@@ -169,12 +170,16 @@ class Bitmap(object):
         threshold = 0.5 * 2 * dx
 
         y = y1 
-        for x in range (x1, x2 + 1):
-            if steep: 
-                self.point(y, x, color)
+        count = x1 
+        while (x2  + 1) >= count:
+            if steep:    
+                self.point(y, count, self.newGlColor)
+           #     print(self.framebuffer)
             else: 
-                self.point(x, y, color)
+                self.point(count, y, self.newGlColor)
+            #    print(self.framebuffer)
             offset += dy
             if offset >= threshold: 
                 y += 1 if y1 < y2 else -1 
                 threshold += 1 * 2 * dx
+            count += 1 
