@@ -63,16 +63,6 @@ class Bitmap(object):
         # close file
         f.close()
     
-    # Clear image 
-    def clear(self):
-        self.framebuffer = [
-            [
-                #show background color 
-                self.clearColor(0,0,0) for x in range(self.width)
-            ]
-            for y in range(self.height)
-        ]
-
     #clear the canvas with a new color 
     def clearColor(self, r, g, b): 
         newR = math.floor(r*255)
@@ -81,6 +71,16 @@ class Bitmap(object):
 
         self.framebuffer = [
             [color(newR, newG, newB) for x in range(self.width)]
+            for y in range(self.height)
+        ]
+    
+    # Clear image 
+    def clear(self):
+        self.framebuffer = [
+            [
+                #show background color 
+                self.color(0,0,0) for x in range(self.width)
+            ]
             for y in range(self.height)
         ]
 
