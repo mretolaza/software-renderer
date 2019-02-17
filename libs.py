@@ -92,8 +92,10 @@ class Bitmap(object):
         self.yViewPort = y
     
     def getRXCoord(self, x):
+        print("valor en x viewport" , x)
         dx = x * (self.viewPortWidth / 2)
         realXVP = (self.viewPortWidth / 2) + dx
+        print("valor de viewport x ", self.xViewPort)
         realX = realXVP + self.xViewPort
         return realX
 
@@ -136,6 +138,8 @@ class Bitmap(object):
                     realX = self.width - 1
                 if (realY == self.height): 
                     realY = self.height - 1
+                    print("x" , realX)
+                    print("y", realY)
                 self.framebuffer[math.floor(realY)][math.floor(realX)] = self.newGlColor
 
     def color(self, r, g, b):
@@ -146,11 +150,19 @@ class Bitmap(object):
         self.newGlColor = color(newR, newG, newB)
         return self.newGlColor
 
-    def point(self, x, y, color):
-        self.framebuffer[y][x] = color
+    def point(self, x, y):
+        self.framebuffer[int(y)][int(x)] = self.newGlColor
 
     def line (self, x1, y1, x2, y2): 
+
+        print(x1 , "valor x1")
+        print(y1, "valor y1 ")
         
+        x1 = math.floor(self.getRXCoord(x1))
+        x2 = math.floor(self.getRXCoord(x2))
+        y1 = math.floor(self.getRYCoord(y1))
+        y2 = math.floor(self.getRYCoord(y2))
+
         dy = abs(y2 - y1) 
         dx = abs(x2 - x1) 
 
@@ -171,16 +183,14 @@ class Bitmap(object):
         threshold = 0.5 * 2 * dx
 
         y = y1 
-        count = x1 
-        while (x2  + 1) >= count:
-        #for x in range (x1,x2 +1): 
+
+        for x in range (x1,x2 +1): 
             if steep:    
-                self.point(y, count , self.newGlColor)
+                self.point(y, x)
             else: 
-                self.point(count, y, self.newGlColor)
+                self.point(x, y)
 
             offset += dy * 2
             if offset >= threshold: 
                 y += 1 if y1 < y2 else -1 
                 threshold += 1 * 2 * dx
-            count += 1 
