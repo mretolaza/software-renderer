@@ -43,7 +43,11 @@ def boundingBox(*vertices):
 
   return vertex2(xCoords[0], yCoords[0]), vertex2(xCoords[-1], yCoords[-1])
 
+# vertex = v 
+# translate = t 
+# scale = s 
 def transform(v, t=(0,0,0), s=(1,1,1)):
+# retorna el vertex 3 trasladado y transformado 
   partA = round((v[0] + t[0]) * s[0])
   partB = round((v[1] + t[1]) * s[1])
   partC = round((v[2] + t[2]) * s[2])

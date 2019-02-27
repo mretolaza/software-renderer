@@ -4,9 +4,9 @@ from obj import Obj
 from vectors_math import * 
 
 def barycentric( A, B, C, P): 
-    cx , cy , cz = cross(
-        V3(B.x - A.x , C.x - A.x , A.x - P.x),
-        V3(B.y - A.y , C.y - A.y , A.y - P.y)
+    cx , cy , cz = crossProduct(
+        vertex3(B.x - A.x , C.x - A.x , A.x - P.x),
+        vertex3(B.y - A.y , C.y - A.y , A.y - P.y)
     )
 
     # [cx/cz cy/cz cz/cz = [u v 1]]
@@ -234,7 +234,7 @@ class Bitmap(object):
                 y += 1 if y1 < y2 else -1 
                 threshold += 1 * 2 * dx
 
-    def triangleOne(self, A, B, C): 
+    def triangleOne(self, A, B, C, color=None): 
         if A.y > B.y:
             A, B = B , A 
         if A.y > C.y: 
@@ -257,3 +257,74 @@ class Bitmap(object):
             for y in range(A.y, B.y + 1):
                 xi = round(A.x - miAc * (A.y -y))
                 xf = round(A.x - miAb * (A.y - y))
+
+                if xi > xf: 
+                    xi, xf = xf, xi 
+                for x in range(xi, xf + 1): 
+                    self.point(x,y) 
+        
+        dxBc = C.x - B.x 
+        dyBc = C.y - B.y 
+        if dyBc: 
+            miBc = dxBc/dyBc
+
+            for y in range(B.y, C.y + 1): 
+                xi = round(A.x - miAc * (A.y - y))
+                xf = round(B.x - miBc * (B.y - y))
+
+                if xi > xf: 
+                    xi, xf = xf, xi 
+
+                    for x in range(xi, xf + 1): 
+                        self.point(x,y)
+
+    def loadOne(self, filename, translate=(0,0,0), scale=(1,1,1)): 
+         model = Obj(filename)
+
+         light = vertex3(0,0,1)
+
+         for face in model.vfaces: 
+             vcount = len(face)
+
+             if vcount == 3: 
+                f1 = face[0][0] - 1
+                f2 = face[1][0] - 1
+                f3 = face[2][0] - 1 
+            
+                a = transform(model.vertices[f1], translate, scale)
+                b = transform(model.vertices[f2], translate, scale)
+                c = transform(model.vertices[f3], translate, scale)
+
+                normal = normProduct(crossProduct(sub(b,a), sub(c,a)))
+                intensity = dotProduct(normal, light)
+                grey = round(255 * intensity)
+
+                if grey < 0: 
+                    continue
+                self.triangleOne(a,b,c, color(grey,grey,grey))
+             else: 
+              f1 = face[0][0] - 1
+              f2 = face[1][0] - 1
+              f3 = face[2][0] - 1
+              f4 = face[3][0] - 1
+
+              vertices  = [
+                  transform(model.vertices[f1], translate, scale),
+                  transform(model.vertices[f2], translate, scale),
+                  transform(model.vertices[f3], translate, scale),
+                  transform(model.vertices[f4], translate, scale)
+              ]
+
+              normal = normProduct(crossProduct(sub(vertices[0], vertices[1]), sub(vertices[1], vertices[2])))
+              intensity = dotProduct(normal, light)
+              grey = round(255 * intensity)
+
+              if grey < 0:
+                  continue 
+              
+              A, B, C, D = vertices 
+
+              self.triangleOne(A, B, C, color(grey, grey,grey))
+              self.triangleOne(A, C, D, color(grey,grey,grey))
+              
+                
