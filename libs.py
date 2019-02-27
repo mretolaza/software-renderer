@@ -1,5 +1,23 @@
 import struct
 import math
+from obj import Obj
+from vectors_math import * 
+
+def barycentric( A, B, C, P): 
+    cx , cy , cz = cross(
+        V3(B.x - A.x , C.x - A.x , A.x - P.x),
+        V3(B.y - A.y , C.y - A.y , A.y - P.y)
+    )
+
+    # [cx/cz cy/cz cz/cz = [u v 1]]
+    if cz == 0: 
+        return -1, -1, -1 
+
+    u = cx/cz 
+    v = cy/cz 
+    w = 1 - u - v 
+
+    return w, v, u
 
 def char(c):
     return struct.pack("=c", c.encode('ascii'))
@@ -18,6 +36,7 @@ class Bitmap(object):
         self.width = width
         self.height = height
         self.framebuffer = []
+        self.zbuffer = []
         self.newGlColor = color(255, 255, 255)
         self.clear()
        
@@ -84,6 +103,12 @@ class Bitmap(object):
             for y in range(self.height)
         ]
 
+        self.zbuffer = [
+            [-float('inf') for x in range(self.width)]
+            for y in range (self.height)
+        ]
+    
+
     # get dimension image (begin of glViewPort)
     def viewPort(self, x, y, width, height):
         self.viewPortWidth = width
@@ -92,10 +117,8 @@ class Bitmap(object):
         self.yViewPort = y
     
     def getRXCoord(self, x):
-        print("valor en x viewport" , x)
         dx = x * (self.viewPortWidth / 2)
         realXVP = (self.viewPortWidth / 2) + dx
-        print("valor de viewport x ", self.xViewPort)
         realX = realXVP + self.xViewPort
         return realX
 
@@ -138,8 +161,6 @@ class Bitmap(object):
                     realX = self.width - 1
                 if (realY == self.height): 
                     realY = self.height - 1
-                    print("x" , realX)
-                    print("y", realY)
                 self.framebuffer[math.floor(realY)][math.floor(realX)] = self.newGlColor
 
     def color(self, r, g, b):
@@ -153,11 +174,29 @@ class Bitmap(object):
     def point(self, x, y):
         self.framebuffer[int(y)][int(x)] = self.newGlColor
 
-    def line (self, x1, y1, x2, y2): 
+    def load(self, filename, translate=(0, 0), scale=(1, 1)):
+        model = Obj(filename)
 
-        print(x1 , "valor x1")
-        print(y1, "valor y1 ")
+        for face in model.vfaces:
+            vcount = len(face)
+            for j in range(vcount):
+                f1 = face[j][0]
+                f2 = face[(j+1)%vcount][0]
+
+                v1 = model.vertices[f1 - 1]
+                v2 = model.vertices[f2 - 1]
+
+               # scaleX, scaleY = scale
+                #translateX, translateY = translate
+
+                x1 = v1[0]
+                y1 = v1[1] 
+                x2 = v2[0] 
+                y2 = v2[1] 
         
+                self.line(x1, y1, x2, y2)
+
+    def line (self, x1, y1, x2, y2): 
         x1 = math.floor(self.getRXCoord(x1))
         x2 = math.floor(self.getRXCoord(x2))
         y1 = math.floor(self.getRYCoord(y1))
@@ -194,3 +233,27 @@ class Bitmap(object):
             if offset >= threshold: 
                 y += 1 if y1 < y2 else -1 
                 threshold += 1 * 2 * dx
+
+    def triangleOne(self, A, B, C): 
+        if A.y > B.y:
+            A, B = B , A 
+        if A.y > C.y: 
+            A, C = C, A
+        if B.y > C.y: 
+            B , C = C, B 
+        
+        dxAc = C.x - A.x 
+        dyAc = C.y - A.y 
+        if dyAc == 0: 
+            return 
+        miAc = dxAc/dyAc
+
+        dxAb  = B.x - A.x 
+        dyAb = B.y - A.y 
+
+        if dyAb != 0: 
+            miAb = dxAb/dyAb
+        
+            for y in range(A.y, B.y + 1):
+                xi = round(A.x - miAc * (A.y -y))
+                xf = round(A.x - miAb * (A.y - y))
