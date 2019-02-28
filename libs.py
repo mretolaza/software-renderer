@@ -1,32 +1,9 @@
 import struct
 import math
 from obj import Obj
-from vectors_math import * 
+from utils import * 
+from constants import * 
 
-def barycentric( A, B, C, P): 
-    cx , cy , cz = crossProduct(
-        vertex3(B.x - A.x , C.x - A.x , A.x - P.x),
-        vertex3(B.y - A.y , C.y - A.y , A.y - P.y)
-    )
-
-    # [cx/cz cy/cz cz/cz = [u v 1]]
-    if cz == 0: 
-        return -1, -1, -1 
-
-    u = cx/cz 
-    v = cy/cz 
-    w = 1 - u - v 
-
-    return w, v, u
-
-def char(c):
-    return struct.pack("=c", c.encode('ascii'))
-
-def word(c):
-    return struct.pack("=h", c)
-
-def dword(c):
-    return struct.pack("=l", c)
 
 def color(r, g, b):
     return bytes([b, g, r])
@@ -82,6 +59,19 @@ class Bitmap(object):
         # close file
         f.close()
     
+    def display(self, filename="img.bmp"): 
+        self.writeFile(filename)
+
+        try:
+            from wand.image import Image 
+            from wand.display import display 
+
+            with Image(filename=filename) as image: 
+                display(image)
+
+        except ImportError: 
+            pass
+    
     #clear the canvas with a new color 
     def clearColor(self, r, g, b): 
         newR = math.floor(r*255)
@@ -102,13 +92,10 @@ class Bitmap(object):
             ]
             for y in range(self.height)
         ]
-
-        self.zbuffer = [
-            [-float('inf') for x in range(self.width)]
-            for y in range (self.height)
+        self.zbuffer = [ 
+            [ -float('inf') for x in range (self.width)]
+            for y in range(self.height)
         ]
-    
-
     # get dimension image (begin of glViewPort)
     def viewPort(self, x, y, width, height):
         self.viewPortWidth = width
@@ -171,32 +158,13 @@ class Bitmap(object):
         self.newGlColor = color(newR, newG, newB)
         return self.newGlColor
 
-    def point(self, x, y):
-        self.framebuffer[int(y)][int(x)] = self.newGlColor
+    def point(self, x, y, color= None):
+        try: 
+            self.framebuffer[int(y)][int(x)] = color or self.newGlColor
+        except: 
+            pass 
 
-    def load(self, filename, translate=(0, 0), scale=(1, 1)):
-        model = Obj(filename)
-
-        for face in model.vfaces:
-            vcount = len(face)
-            for j in range(vcount):
-                f1 = face[j][0]
-                f2 = face[(j+1)%vcount][0]
-
-                v1 = model.vertices[f1 - 1]
-                v2 = model.vertices[f2 - 1]
-
-               # scaleX, scaleY = scale
-                #translateX, translateY = translate
-
-                x1 = v1[0]
-                y1 = v1[1] 
-                x2 = v2[0] 
-                y2 = v2[1] 
-        
-                self.line(x1, y1, x2, y2)
-
-    def line (self, x1, y1, x2, y2): 
+    def line (self, x1, y1, x2, y2, color = None): 
         x1 = math.floor(self.getRXCoord(x1))
         x2 = math.floor(self.getRXCoord(x2))
         y1 = math.floor(self.getRYCoord(y1))
@@ -218,23 +186,23 @@ class Bitmap(object):
         dy = abs(y2 - y1)  
         dx = abs(x2 - x1)  
 
-        offset = 0  * 2 * dx
-        threshold = 0.5 * 2 * dx
+        offset = 0 
+        threshold = dx
 
         y = y1 
 
         for x in range (x1,x2 +1): 
             if steep:    
-                self.point(y, x)
+                self.point(y, x, color)
             else: 
-                self.point(x, y)
+                self.point(x, y, color)
 
             offset += dy * 2
             if offset >= threshold: 
                 y += 1 if y1 < y2 else -1 
-                threshold += 1 * 2 * dx
+                threshold += dx * 2
 
-    def triangleOne(self, A, B, C, color=None): 
+    def triangleF(self, A, B, C, color=None): #Primer algoritmo enseñado para pintar los triangulos 
         if A.y > B.y:
             A, B = B , A 
         if A.y > C.y: 
@@ -261,7 +229,7 @@ class Bitmap(object):
                 if xi > xf: 
                     xi, xf = xf, xi 
                 for x in range(xi, xf + 1): 
-                    self.point(x,y) 
+                    self.point(x,y, color) 
         
         dxBc = C.x - B.x 
         dyBc = C.y - B.y 
@@ -276,9 +244,24 @@ class Bitmap(object):
                     xi, xf = xf, xi 
 
                     for x in range(xi, xf + 1): 
-                        self.point(x,y)
+                        self.point(x,y, color)
 
-    def loadOne(self, filename, translate=(0,0,0), scale=(1,1,1)): 
+    #aplicando coordenadas baricentrícas 
+    def triangle(self, A, B, C, color=None):
+        bboxMin, bboxMax = boundingBox(A, B, C)
+
+        for x in range(bboxMin.x , bboxMax.x +1): 
+            for y in range(bboxMin.y, bboxMax.y +1): 
+                w,v,u = barycentric(A,B,C,vertex2(x,y))
+                if w < 0 or v < 0 or u < 0: 
+                    continue
+                z = A.z * w + B.z * v + C.z * u
+
+                if z > self.zbuffer[x][y]:
+                    self.point(x,y,color)
+                    self.zbuffer[x][y] = z
+
+    def load(self, filename, translate=(0,0,0), scale=(1,1,1)): 
          model = Obj(filename)
 
          light = vertex3(0,0,1)
@@ -301,7 +284,7 @@ class Bitmap(object):
 
                 if grey < 0: 
                     continue
-                self.triangleOne(a,b,c, color(grey,grey,grey))
+                self.triangle(a,b,c, color(grey,grey,grey))
              else: 
               f1 = face[0][0] - 1
               f2 = face[1][0] - 1
@@ -324,7 +307,5 @@ class Bitmap(object):
               
               A, B, C, D = vertices 
 
-              self.triangleOne(A, B, C, color(grey, grey,grey))
-              self.triangleOne(A, C, D, color(grey,grey,grey))
-              
-                
+              self.triangle(A, B, C, color(grey, grey,grey))
+              self.triangle(A, C, D, color(grey,grey,grey))
