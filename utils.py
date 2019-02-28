@@ -53,3 +53,18 @@ def transform(v, t=(0,0,0), s=(1,1,1)):
   partC = round((v[2] + t[2]) * s[2])
   
   return vertex3(partA, partB , partC)
+
+def barycentric(A, B, C, P): 
+  bary = crossProduct(
+    vertex3(C.x - A.x, B.x - A.x, A.x - P.x), 
+    vertex3(C.y - A.y, B.y - A.y, A.y - P.y)
+  )
+
+  if abs(bary[2]) < 1:
+    return -1, -1, -1
+  
+  return (
+    1 - (bary[0] + bary[1]) / bary[2], 
+    bary[1] / bary[2], 
+    bary[0] / bary[2]
+  )
