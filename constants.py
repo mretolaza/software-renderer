@@ -8,3 +8,6 @@ def word(c):
 
 def dword(c):
     return struct.pack("=l", c)
+
+def getColor(r, g, b):
+  return bytes([b, g, r])
