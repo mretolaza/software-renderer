@@ -4,7 +4,6 @@ from obj import Obj
 from utils import * 
 from constants import * 
 
-
 def color(r, g, b):
     return bytes([b, g, r])
 
