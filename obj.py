@@ -1,12 +1,13 @@
 import struct 
-from constants import getColor
+
+def color(r, g, b):
+  return bytes([b, g, r])
 
 def try_int(s, base=10, val=None):
   try:
     return int(s, base)
   except ValueError:
     return val
-
 class Obj(object):
     def __init__(self, filename):
         with open(filename) as f:
@@ -31,7 +32,7 @@ class Obj(object):
                     self.vfaces.append([list(map(try_int, face.split('/'))) for face in value.split(' ')])
 
 
-# abre textura de 24 bits 
+# agrega la textura 
 class Texture(object):
     def __init__(self, path):
         self.path = path
@@ -39,12 +40,13 @@ class Texture(object):
 
     def read(self):
         image = open(self.path, "rb")
-        image.seek(2 + 4 + 4) 
-        header_size = struct.unpack("=l", image.read(4))[0]
+        # we ignore all the header stuff
+        image.seek(2 + 4 + 4)  # skip BM, skip bmp size, skip zeros
+        header_size = struct.unpack("=l", image.read(4))[0]  # read header size
         image.seek(2 + 4 + 4 + 4 + 4)
         
-        self.width = struct.unpack("=l", image.read(4))[0]
-        self.height = struct.unpack("=l", image.read(4))[0]
+        self.width = struct.unpack("=l", image.read(4))[0]  # read width
+        self.height = struct.unpack("=l", image.read(4))[0]  # read width
         self.framebuffer = []
         image.seek(header_size)
         for y in range(self.height):
@@ -53,13 +55,12 @@ class Texture(object):
                 b = ord(image.read(1))
                 g = ord(image.read(1))
                 r = ord(image.read(1))
-                self.framebuffer[y].append(getColor(r,g,b))
+                self.framebuffer[y].append(color(r,g,b))
         image.close()
 
     def get_color(self, tx, ty, intensity=1):
         x = int(tx * self.width)
         y = int(ty * self.height)
-        # return self.framebuffer[y][x]
         try:
             return bytes(map(lambda b: round(b*intensity) if b*intensity > 0 else 0, self.framebuffer[y][x]))
         except:
