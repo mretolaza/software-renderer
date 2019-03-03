@@ -47,7 +47,7 @@ def glLine (x1,y1, x2,y2):
 
 #Show new image 
 def glFinish():
-    img.writeFile("img.bmp")
+    img.display("render.bmp")
 
 glCreateWindow(800,600)
 glViewPort(0,0,799,599)
