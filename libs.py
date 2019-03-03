@@ -246,7 +246,7 @@ class Bitmap(object):
                         self.point(x,y, color)
 
     #aplicando coordenadas baricentrícas 
-    def triangle(self, A, B, C, color=None):
+    def triangleB(self, A, B, C, color=None,  texture=None, textureCoords=(), intensity=1):
         bboxMin, bboxMax = boundingBox(A, B, C)
 
         for x in range(bboxMin.x , bboxMax.x +1): 
@@ -256,55 +256,89 @@ class Bitmap(object):
                     continue
                 z = A.z * w + B.z * v + C.z * u
 
-                if z > self.zbuffer[x][y]:
-                    self.point(x,y,color)
+                if texture: 
+                    tA, tB, tC = textureCoords 
+                    tx = tA.x * w + tB.x * v + tC.x * u
+                    ty = tA.y * w + tB.y * v + tC.y * u
+
+                    color = texture.get_color(tx, ty, intensity)
+                z = A.z * w  + B.z * v + C.z * u 
+
+                if x < 0 or y < 0: 
+                    continue
+
+                if x < len(self.zbuffer) and y < len(self.zbuffer[x]) and z > self.zbuffer[x][y]:
+                    self.point(x, y, color)
                     self.zbuffer[x][y] = z
+        
+    def load(self, filename, translate=(0, 0, 0), scale=(1, 1, 1), texture=None): 
+        model= Obj(filename)
+        light= vertex3(0,0,1)
 
-    def load(self, filename, translate=(0,0,0), scale=(1,1,1)): 
-         model = Obj(filename)
+        for face in model.vfaces: 
+            vcount = len(face)
 
-         light = vertex3(0,0,1)
+            if vcount == 3: 
+                f1= face[0][0] - 1
+                f2= face[1][0] - 1 
+                f3= face[2][0] - 1 
 
-         for face in model.vfaces: 
-             vcount = len(face)
-
-             if vcount == 3: 
-                f1 = face[0][0] - 1
-                f2 = face[1][0] - 1
-                f3 = face[2][0] - 1 
-            
-                a = transform(model.vertices[f1], translate, scale)
-                b = transform(model.vertices[f2], translate, scale)
-                c = transform(model.vertices[f3], translate, scale)
+                a= transform(model.vertices[f1], translate, scale)
+                b= transform(model.vertices[f2], translate, scale)
+                c= transform(model.vertices[f3], translate, scale)
 
                 normal = normProduct(crossProduct(sub(b,a), sub(c,a)))
                 intensity = dotProduct(normal, light)
+
+                if not texture: 
+                    grey = round(255 * intensity)
+                    if grey < 0: 
+                        continue
+                    self.triangleB(a,b,c, color=color(grey,grey,grey))
+                else: 
+                    t1 = face[0][1] - 1 
+                    t2 = face[1][1] - 1 
+                    t3 = face[2][1] - 1
+                    tA = vertex3(*model.tvertices[t1])
+                    tB = vertex3(*model.tvertices[t2])
+                    tC = vertex3(*model.tvertices[t3])
+
+                    self.triangleB(a,b,c, texture=texture, textureCoords=(tA, tB, tC), intensity=intensity) 
+            else: 
+                f1 = face[0][0] - 1 
+                f2 = face[1][0] - 1 
+                f3 = face[2][0] - 1 
+                f4 = face[3][0] - 1 
+
+                vertices = [
+                    transform(model.vertices[f1],  translate, scale), 
+                    transform(model.vertices[f2],  translate, scale),
+                    transform(model.vertices[f3],  translate, scale),
+                    transform(model.vertices[f4],  translate, scale)
+                ]  
+
+                normal = normProduct(crossProduct(sub(vertices[0], vertices[1]), sub(vertices[1], vertices[2])))
+                intensity = dotProduct(normal, light)
                 grey = round(255 * intensity)
 
-                if grey < 0: 
-                    continue
-                self.triangle(a,b,c, color(grey,grey,grey))
-             else: 
-              f1 = face[0][0] - 1
-              f2 = face[1][0] - 1
-              f3 = face[2][0] - 1
-              f4 = face[3][0] - 1
+                A, B, C, D = vertices
 
-              vertices  = [
-                  transform(model.vertices[f1], translate, scale),
-                  transform(model.vertices[f2], translate, scale),
-                  transform(model.vertices[f3], translate, scale),
-                  transform(model.vertices[f4], translate, scale)
-              ]
+                if not texture: 
+                    grey = round(255 *intensity)
+                    if grey < 0: 
+                        continue
+                    self.triangleB(A, B, C, color(grey,grey,grey))
+                    self.triangleB(A, C, D, color(grey,grey,grey))
 
-              normal = normProduct(crossProduct(sub(vertices[0], vertices[1]), sub(vertices[1], vertices[2])))
-              intensity = dotProduct(normal, light)
-              grey = round(255 * intensity)
-
-              if grey < 0:
-                  continue 
-              
-              A, B, C, D = vertices 
-
-              self.triangle(A, B, C, color(grey, grey,grey))
-              self.triangle(A, C, D, color(grey,grey,grey))
+                else: 
+                    t1 = face[0][1] - 1 
+                    t2 = face[1][1] - 1
+                    t3 = face[2][1] - 1
+                    t4 = face[3][1] - 1 
+                    tA = vertex3(*model.tvertices[t1])
+                    tB = vertex3(*model.tvertices[t2])
+                    tC = vertex3(*model.tvertices[t3])
+                    tD = vertex3(*model.tvertices[t4])
+                    
+                    self.triangleB(A, B, C, texture=texture, textureCoords=(tA, tB, tC), intensity=intensity)
+                    self.triangleB(A, C, D, texture=texture,  textureCoords=(tA, tC, tD), intensity=intensity)
