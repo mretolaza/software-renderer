@@ -95,6 +95,10 @@ class Bitmap(object):
             [ -float('inf') for x in range (self.width)]
             for y in range(self.height)
         ]
+    
+    def setColor(self, color):
+    self.newGlColor = color
+
     # get dimension image (begin of glViewPort)
     def viewPort(self, x, y, width, height):
         self.viewPortWidth = width
@@ -254,7 +258,6 @@ class Bitmap(object):
                 w,v,u = barycentric(A,B,C,vertex2(x,y))
                 if w < 0 or v < 0 or u < 0: 
                     continue
-                z = A.z * w + B.z * v + C.z * u
 
                 if texture: 
                     tA, tB, tC = textureCoords 
@@ -262,6 +265,7 @@ class Bitmap(object):
                     ty = tA.y * w + tB.y * v + tC.y * u
 
                     color = texture.get_color(tx, ty, intensity)
+               
                 z = A.z * w  + B.z * v + C.z * u 
 
                 if x < 0 or y < 0: 
