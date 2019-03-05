@@ -40,13 +40,12 @@ class Texture(object):
 
     def read(self):
         image = open(self.path, "rb")
-        # we ignore all the header stuff
-        image.seek(2 + 4 + 4)  # skip BM, skip bmp size, skip zeros
-        header_size = struct.unpack("=l", image.read(4))[0]  # read header size
+        image.seek(2 + 4 + 4)
+        header_size = struct.unpack("=l", image.read(4))[0]
         image.seek(2 + 4 + 4 + 4 + 4)
         
-        self.width = struct.unpack("=l", image.read(4))[0]  # read width
-        self.height = struct.unpack("=l", image.read(4))[0]  # read width
+        self.width = struct.unpack("=l", image.read(4))[0]
+        self.height = struct.unpack("=l", image.read(4))[0]
         self.framebuffer = []
         image.seek(header_size)
         for y in range(self.height):
