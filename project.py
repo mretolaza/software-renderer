@@ -43,5 +43,5 @@ def glFinish():
 glCreateWindow(800,600)
 glViewPort(0,0,799,599)
 glClear()
-img.load('prueba.obj', (0.5, 0.5, 0.5), (500, 500, 500)) 
+img.load('chip.obj', (0.5, 0.5, 0.5), (500, 500, 500)) 
 glFinish()
