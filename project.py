@@ -36,15 +36,6 @@ def glClearColor(r,g,b):
 def glVertex(x,y):
     img.vertex(x,y)
 
-def getNewX(x): 
-    return img.getNormXCoord(x)
-
-def getNewY(y): 
-    return img.getNormYCoord(y)
-
-def glLine (x1,y1, x2,y2):
-    img.line(x1, y1, x2, y2)
-
 #Show new image 
 def glFinish():
     img.display("render.bmp")
@@ -54,9 +45,5 @@ glViewPort(0,0,799,599)
 glClear()
 glColor(1, 0, 0)
 glVertex(0,0)
-glLine(getNewX(10),getNewY(10),getNewX(510),getNewY(10))
-glLine(getNewX(10),getNewY(10),getNewX(462),getNewY(191))
-glLine(getNewX(10),getNewY(10),getNewX(354),getNewY(354))
-glLine(getNewX(10),getNewY(10),getNewX(191),getNewY(462))
-glLine(getNewX(10),getNewY(10),getNewX(10),getNewY(510))
+
 glFinish()
