@@ -43,7 +43,5 @@ def glFinish():
 glCreateWindow(800,600)
 glViewPort(0,0,799,599)
 glClear()
-glColor(1, 0, 0)
-glVertex(0,0)
-
+img.load('prueba.obj', (0.5, 0.5, 0.5), (500, 500, 500)) 
 glFinish()
