@@ -95,10 +95,7 @@ class Bitmap(object):
             [ -float('inf') for x in range (self.width)]
             for y in range(self.height)
         ]
-    
-    def setColor(self, color):
-    self.newGlColor = color
-
+        
     # get dimension image (begin of glViewPort)
     def viewPort(self, x, y, width, height):
         self.viewPortWidth = width
