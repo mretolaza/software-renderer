@@ -1,14 +1,8 @@
 import struct
 import math
-
-def char(c):
-    return struct.pack("=c", c.encode('ascii'))
-
-def word(c):
-    return struct.pack("=h", c)
-
-def dword(c):
-    return struct.pack("=l", c)
+from obj import Obj
+from utils import * 
+from constants import * 
 
 def color(r, g, b):
     return bytes([b, g, r])
@@ -18,6 +12,7 @@ class Bitmap(object):
         self.width = width
         self.height = height
         self.framebuffer = []
+        self.zbuffer = []
         self.newGlColor = color(255, 255, 255)
         self.clear()
        
@@ -63,6 +58,19 @@ class Bitmap(object):
         # close file
         f.close()
     
+    def display(self, filename="img.bmp"): 
+        self.writeFile(filename)
+
+        try:
+            from wand.image import Image 
+            from wand.display import display 
+
+            with Image(filename=filename) as image: 
+                display(image)
+
+        except ImportError: 
+            pass
+    
     #clear the canvas with a new color 
     def clearColor(self, r, g, b): 
         newR = math.floor(r*255)
@@ -83,7 +91,11 @@ class Bitmap(object):
             ]
             for y in range(self.height)
         ]
-
+        self.zbuffer = [ 
+            [ -float('inf') for x in range (self.width)]
+            for y in range(self.height)
+        ]
+        
     # get dimension image (begin of glViewPort)
     def viewPort(self, x, y, width, height):
         self.viewPortWidth = width
@@ -92,10 +104,8 @@ class Bitmap(object):
         self.yViewPort = y
     
     def getRXCoord(self, x):
-        print("valor en x viewport" , x)
         dx = x * (self.viewPortWidth / 2)
         realXVP = (self.viewPortWidth / 2) + dx
-        print("valor de viewport x ", self.xViewPort)
         realX = realXVP + self.xViewPort
         return realX
 
@@ -138,8 +148,6 @@ class Bitmap(object):
                     realX = self.width - 1
                 if (realY == self.height): 
                     realY = self.height - 1
-                    print("x" , realX)
-                    print("y", realY)
                 self.framebuffer[math.floor(realY)][math.floor(realX)] = self.newGlColor
 
     def color(self, r, g, b):
@@ -150,14 +158,13 @@ class Bitmap(object):
         self.newGlColor = color(newR, newG, newB)
         return self.newGlColor
 
-    def point(self, x, y):
-        self.framebuffer[int(y)][int(x)] = self.newGlColor
+    def point(self, x, y, color= None):
+        try: 
+            self.framebuffer[int(y)][int(x)] = color or self.newGlColor
+        except: 
+            pass 
 
-    def line (self, x1, y1, x2, y2): 
-
-        print(x1 , "valor x1")
-        print(y1, "valor y1 ")
-        
+    def line (self, x1, y1, x2, y2, color = None): 
         x1 = math.floor(self.getRXCoord(x1))
         x2 = math.floor(self.getRXCoord(x2))
         y1 = math.floor(self.getRYCoord(y1))
@@ -179,18 +186,160 @@ class Bitmap(object):
         dy = abs(y2 - y1)  
         dx = abs(x2 - x1)  
 
-        offset = 0  * 2 * dx
-        threshold = 0.5 * 2 * dx
+        offset = 0 
+        threshold = dx
 
         y = y1 
 
         for x in range (x1,x2 +1): 
             if steep:    
-                self.point(y, x)
+                self.point(y, x, color)
             else: 
-                self.point(x, y)
+                self.point(x, y, color)
 
             offset += dy * 2
             if offset >= threshold: 
                 y += 1 if y1 < y2 else -1 
-                threshold += 1 * 2 * dx
+                threshold += dx * 2
+
+    def triangleF(self, A, B, C, color=None): #Primer algoritmo enseñado para pintar los triangulos 
+        if A.y > B.y:
+            A, B = B , A 
+        if A.y > C.y: 
+            A, C = C, A
+        if B.y > C.y: 
+            B , C = C, B 
+        
+        dxAc = C.x - A.x 
+        dyAc = C.y - A.y 
+        if dyAc == 0: 
+            return 
+        miAc = dxAc/dyAc
+
+        dxAb  = B.x - A.x 
+        dyAb = B.y - A.y 
+
+        if dyAb != 0: 
+            miAb = dxAb/dyAb
+        
+            for y in range(A.y, B.y + 1):
+                xi = round(A.x - miAc * (A.y -y))
+                xf = round(A.x - miAb * (A.y - y))
+
+                if xi > xf: 
+                    xi, xf = xf, xi 
+                for x in range(xi, xf + 1): 
+                    self.point(x,y, color) 
+        
+        dxBc = C.x - B.x 
+        dyBc = C.y - B.y 
+        if dyBc: 
+            miBc = dxBc/dyBc
+
+            for y in range(B.y, C.y + 1): 
+                xi = round(A.x - miAc * (A.y - y))
+                xf = round(B.x - miBc * (B.y - y))
+
+                if xi > xf: 
+                    xi, xf = xf, xi 
+
+                    for x in range(xi, xf + 1): 
+                        self.point(x,y, color)
+
+    #aplicando coordenadas baricentrícas 
+    def triangleB(self, A, B, C, color=None,  texture=None, textureCoords=(), intensity=1):
+        bboxMin, bboxMax = boundingBox(A, B, C)
+
+        for x in range(bboxMin.x , bboxMax.x +1): 
+            for y in range(bboxMin.y, bboxMax.y +1): 
+                w,v,u = barycentric(A,B,C,vertex2(x,y))
+                if w < 0 or v < 0 or u < 0: 
+                    continue
+
+                if texture: 
+                    tA, tB, tC = textureCoords 
+                    tx = tA.x * w + tB.x * v + tC.x * u
+                    ty = tA.y * w + tB.y * v + tC.y * u
+
+                    color = texture.get_color(tx, ty, intensity)
+               
+                z = A.z * w  + B.z * v + C.z * u 
+
+                if x < 0 or y < 0: 
+                    continue
+
+                if x < len(self.zbuffer) and y < len(self.zbuffer[x]) and z > self.zbuffer[x][y]:
+                    self.point(x, y, color)
+                    self.zbuffer[x][y] = z
+        
+    def load(self, filename, translate=(0, 0, 0), scale=(1, 1, 1), texture=None): 
+        model= Obj(filename)
+        light= vertex3(0,0,1)
+
+        for face in model.vfaces: 
+            vcount = len(face)
+
+            if vcount == 3: 
+                f1= face[0][0] - 1
+                f2= face[1][0] - 1 
+                f3= face[2][0] - 1 
+
+                a= transform(model.vertices[f1], translate, scale)
+                b= transform(model.vertices[f2], translate, scale)
+                c= transform(model.vertices[f3], translate, scale)
+
+                normal = normProduct(crossProduct(sub(b,a), sub(c,a)))
+                intensity = dotProduct(normal, light)
+
+                if not texture: 
+                    grey = round(255 * intensity)
+                    if grey < 0: 
+                        continue
+                    self.triangleB(a,b,c, color=color(grey,grey,grey))
+                else: 
+                    t1 = face[0][1] - 1 
+                    t2 = face[1][1] - 1 
+                    t3 = face[2][1] - 1
+                    tA = vertex3(*model.tvertices[t1])
+                    tB = vertex3(*model.tvertices[t2])
+                    tC = vertex3(*model.tvertices[t3])
+
+                    self.triangleB(a,b,c, texture=texture, textureCoords=(tA, tB, tC), intensity=intensity) 
+            else: 
+                f1 = face[0][0] - 1 
+                f2 = face[1][0] - 1 
+                f3 = face[2][0] - 1 
+                f4 = face[3][0] - 1 
+
+                vertices = [
+                    transform(model.vertices[f1],  translate, scale), 
+                    transform(model.vertices[f2],  translate, scale),
+                    transform(model.vertices[f3],  translate, scale),
+                    transform(model.vertices[f4],  translate, scale)
+                ]  
+
+                normal = normProduct(crossProduct(sub(vertices[0], vertices[1]), sub(vertices[1], vertices[2])))
+                intensity = dotProduct(normal, light)
+                grey = round(255 * intensity)
+
+                A, B, C, D = vertices
+
+                if not texture: 
+                    grey = round(255 *intensity)
+                    if grey < 0: 
+                        continue
+                    self.triangleB(A, B, C, color(grey,grey,grey))
+                    self.triangleB(A, C, D, color(grey,grey,grey))
+
+                else: 
+                    t1 = face[0][1] - 1 
+                    t2 = face[1][1] - 1
+                    t3 = face[2][1] - 1
+                    t4 = face[3][1] - 1 
+                    tA = vertex3(*model.tvertices[t1])
+                    tB = vertex3(*model.tvertices[t2])
+                    tC = vertex3(*model.tvertices[t3])
+                    tD = vertex3(*model.tvertices[t4])
+                    
+                    self.triangleB(A, B, C, texture=texture, textureCoords=(tA, tB, tC), intensity=intensity)
+                    self.triangleB(A, C, D, texture=texture,  textureCoords=(tA, tC, tD), intensity=intensity)
