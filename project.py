@@ -4,6 +4,7 @@ import math
 import os 
 from libs import Bitmap
 from libs import word
+from obj import Texture
 
 #Objet to draw 
 img = None
@@ -43,5 +44,6 @@ def glFinish():
 glCreateWindow(800,600)
 glViewPort(0,0,799,599)
 glClear()
-img.load('chip.obj', (0.5, 0.5, 0.5), (500, 500, 500)) 
+t = Texture('textura.bmp')
+img.load('mono.obj' ,  (0.5, 0.5, 0.5), (500, 500, 500), texture=t) 
 glFinish()

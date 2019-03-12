@@ -300,9 +300,9 @@ class Bitmap(object):
                     t1 = face[0][1] - 1 
                     t2 = face[1][1] - 1 
                     t3 = face[2][1] - 1
-                    tA = vertex3(*model.tvertices[t1])
-                    tB = vertex3(*model.tvertices[t2])
-                    tC = vertex3(*model.tvertices[t3])
+                    tA = vertex2(*model.tvertices[t1])
+                    tB = vertex2(*model.tvertices[t2])
+                    tC = vertex2(*model.tvertices[t3])
 
                     self.triangleB(a,b,c, texture=texture, textureCoords=(tA, tB, tC), intensity=intensity) 
             else: 
