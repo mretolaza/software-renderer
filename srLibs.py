@@ -243,7 +243,7 @@ class Bitmap(object):
 
             if self.activeTex:
                 for fi in face:
-                    textureVertex = vertex3(*model.textures[fi[1]])
+                    textureVertex = vertex2(*model.textures[fi[1]])
                     vertexBuffer.append(textureVertex)
 
             for fi in face:
@@ -422,7 +422,7 @@ class Bitmap(object):
                     if x < 0 or y < 0:
                         continue
 
-                    colour2 = self.activeShaderNoTexture(
+                    colourGrey = self.activeShaderNoTexture(
                         self,                        
                         barycentricCoords=(b1, b2, b3),     
                         posCoords=(x, y),   
@@ -432,7 +432,7 @@ class Bitmap(object):
 
                     try:
                         if z > self.zBuffer[y][x]:
-                            self.glVertex(self.getNormXCoord(x), self.getNormYCoord(y), colour2)
+                            self.glVertex(self.getNormXCoord(x), self.getNormYCoord(y), colourGrey)
                             self.zBuffer[y][x] = z
                     except:
                         pass
@@ -453,51 +453,9 @@ class Bitmap(object):
         normY = normalA.y * b1 + normalB.y * b2 + normalC.y * b3
         normZ = normalA.z * b1 + normalB.z * b2 + normalC.z * b3
 
-        vect = vertex3(normX, normY, normZ)  
+        vect = vertex3(normX, normY, normZ)
+
         textureColor = color(255, 255, 255) 
-
-        if (self.renderIs == 'planet'):
-            # colors
-            baseColor = color(93, 43, 22)
-            lighterColor = color(100, 51, 21)
-            darkerColor = color(74, 33, 19)
-            purple_color = color(50, 15, 31)
-            top_color = color(98, 100, 100)
-            
-            textureColor = baseColor
-
-            if (bool(random.getrandbits(1))):
-                if (bool(random.getrandbits(1))):
-                    textureColor = lighterColor
-                else:
-                    textureColor = darkerColor
-
-            if ((randint(500, 680) < x < randint(600, 700)) and (randint(500, 600) < y < randint(600, 700))):
-                textureColor = purple_color
-
-            if ((randint(800, 1000) < x < randint(1000, 1200)) and (randint(500, 600) < y < randint(700, 800))):
-                textureColor = purple_color            
-
-            if ((randint(600, 900) < x < randint(900, 1000)) and (randint(300, 350) < y < randint(350, 400))):
-                textureColor = purple_color
-
-            if ((randint(850, 900) < x < randint(950, 1000)) and (randint(780, 820) < y < randint(820, 900))):
-                textureColor = top_color
-
-        if (self.renderIs == 'moon'):
-            # colors
-            baseColor = color(88, 88, 88)
-            lighterColor = color(92, 92, 92)
-            darkerColor = color(36, 36, 36)            
-            
-            textureColor = baseColor
-
-            if (bool(random.getrandbits(1))):
-                if (bool(random.getrandbits(1))):
-                    textureColor = lighterColor
-                else:
-                    textureColor = darkerColor
-
         textureIntensity = dotProduct(vect, vertex3(0,0,1))
 
         try:
@@ -512,7 +470,7 @@ class Bitmap(object):
     def glSetGouradShader(self, obj, **kwargs):
         b1, b2, b3 = kwargs['barycentricCoords']
         textureXPos, textureYPos = kwargs['textureCoords']
-        textureColor = obj.activeTex.get_texture_color(textureXPos, textureYPos)
+        textureColor = obj.activeTex.getTextureColor(textureXPos, textureYPos)
         normalA, normalB, normalC = kwargs['varyingNormals']
 
         intensityPointA, intensityPointB, intensityPointC = [
