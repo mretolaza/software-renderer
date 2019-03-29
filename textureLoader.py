@@ -32,7 +32,7 @@ class textureLoader(object):
 
         self.image.close()
 
-    def get_texture_color(self, tex_x_pos, tex_y_pos, intensity = 1):
+    def getTextureColor(self, tex_x_pos, tex_y_pos, intensity = 1):
         x_coord = int(tex_x_pos * self.width)
         y_coord = int(tex_y_pos * self.height)
 
