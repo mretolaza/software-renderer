@@ -1,8 +1,9 @@
 import struct
 import math
 from math import cos, sin
+import random 
+from random import randint 
 from constants import *
-from obj import Obj
 from objectLoader import objectLoader
 from textureLoader import textureLoader
 from collections import namedtuple
@@ -13,7 +14,6 @@ class Bitmap(object):
         self.filename = filename
         self.glInit()
        
-
     def glInit(self): 
         self.framebuffer = []
         self.newGlColor = getColor(255, 255, 255)
@@ -26,47 +26,6 @@ class Bitmap(object):
         self.activeVArray = None 
         self.activeTexture = None 
         self.vertexBuffer = []
-    
-     #structure image file 
-    def writeFile(self):
-        f = open(self.filename, "wb")
-        # estandar
-        f.write(char('B'))
-        f.write(char('M'))
-        # file size
-        f.write(dword(14 + 40 + self.width * self.height * 3))
-        # reserved
-        f.write(dword(0))
-        # data offset
-        f.write(dword(54))
-        # header size
-        f.write(dword(40))
-        # width
-        f.write(dword(self.width))
-        # height
-        f.write(dword(self.height))
-        # planes
-        f.write(word(1))
-        # bits per pixel
-        f.write(word(24))
-        # compression
-        f.write(dword(0))
-        # image size
-        f.write(dword(self.width * self.height * 3))
-        # x pixels per meter
-        f.write(dword(0))
-        # y pixels per meter
-        f.write(dword(0))
-        # number of colors
-        f.write(dword(0))
-        # important colors
-        f.write(dword(0))
-        # image data
-        for x in range(self.height):
-            for y in range(self.width):
-                f.write(self.framebuffer[x][y])
-        # close file
-        f.close()
     
     def createWindow(self, width, height): 
         self.width = width
@@ -100,7 +59,6 @@ class Bitmap(object):
 
     def clear(self, r=0, g=0, b=0 ):
         self.clearColor(r,g,b)
-        self.clearCanva()
         self.setZBuffer()
         
     # get dimension image (begin of glViewPort)
@@ -111,7 +69,6 @@ class Bitmap(object):
         self.yViewPort = y
         self.loadViewPortMatrix()
 
-    
     def getRXCoord(self, x):
         dx = x * (self.viewPortWidth / 2)
         realXVP = (self.viewPortWidth / 2) + dx
@@ -530,9 +487,9 @@ class Bitmap(object):
                         colour = self.activeShader( 
                             self, 
                             triangle=(pointA, pointB, pointC),
-                            barycentric_coords=(b1, b2, b3),
-                            texture_coords=(texXPos, texYPos),
-                            varying_normals=(normalA, normalB, normalC),
+                            barycentricCoords=(b1, b2, b3),
+                            textureCoords=(texXPos, texYPos),
+                            varyingNormals=(normalA, normalB, normalC),
                             intensity=intensity
                         ) 
 
@@ -558,8 +515,8 @@ class Bitmap(object):
                         
                         colour_grey = self.activeShaderNoTexture( 
                             self,
-                            barycentric_coords=(b1, b2, b3),                        
-                            varying_normals=(normalA, normalB, normalC),
+                            barycentricCoords=(b1, b2, b3),                        
+                            varyingNormals=(normalA, normalB, normalC),
                             intensity=intensity 
                         )
 
@@ -571,8 +528,9 @@ class Bitmap(object):
                             pass 
                     
     def setGouradShaderNoTexture(self,obj, **kwargs): 
-        b1, b2, b3 = kwargs['barycentric_coords']
-        normalA, normalB, normalC = kwargs['varying_normals']
+        b1, b2, b3 = kwargs['barycentricCoords']
+        x,y = kwargs['pos_coords']
+        normalA, normalB, normalC = kwargs['varyingNormals']
         
         norm_x = normalA.x * b1 + normalB.x * b2 + normalC.x * b3
         norm_y = normalA.y * b1 + normalB.y * b2 + normalC.y * b3
@@ -580,7 +538,46 @@ class Bitmap(object):
         
         norm = vertex3(norm_x, norm_y, norm_z)
         textureColor = getColor(255,255,255)
-        texIntensity = dotProduct(norm, vertex3(0,0, kwargs['intensity']))
+        if self.renderIs == 'planet': 
+            baseColor = getColor(93, 43, 22)
+            lighterColor = getColor(100, 51, 21)
+            darkerColor = getColor(74, 33, 19)
+            purpleColor = getColor(50, 15, 31)
+            topColor = getColor(98, 100, 100)
+
+            textureColor = baseColor
+
+            if (bool(random.getrandbits(1))): 
+                if (bool(random.getrandbits(1))): 
+                    textureColor = lighterColor
+                else: 
+                    textureColor = darkerColor
+            if ((randint(500,600) < x < randint(600,700)) and (randint(500,600) < y < randint(600,700))): 
+                textureColor = purpleColor 
+            
+            if ((randint(800, 1000) < x < randint(1000, 1200)) and (randint(500, 600) < y < randint(700, 800))):
+                textureColor = purpleColor            
+
+            if ((randint(600, 900) < x < randint(900, 1000)) and (randint(300, 350) < y < randint(350, 400))):
+                textureColor = purpleColor
+
+            if ((randint(850, 900) < x < randint(950, 1000)) and (randint(780, 820) < y < randint(820, 900))):
+                textureColor = topColor
+        if self.renderIs == 'moon': 
+            baseColor= getColor(88, 88, 88)
+            lighterColor = getColor(92, 92, 92)
+            darkerColor=getColor(36, 36, 36)
+
+            textureColor = baseColor
+
+            if (bool(random.getrandbits(1))): 
+                if (bool(random.getrandbits(1))): 
+                    textureColor = lighterColor
+                else: 
+                    textureColor = darkerColor 
+        
+        texIntensity = dotProduct(norm, vertex3(0,0,1))
+        print(textureColor)            
         try: 
             return color (
                 int(textureColor[2] * texIntensity) if (textureColor[0] * texIntensity > 0)  else 0,
@@ -591,10 +588,10 @@ class Bitmap(object):
             pass
 
     def setGouradShader(self, obj, **kwargs): 
-        b1, b2, b3 = kwargs['barycentric_coords']
-        texXPos, texYPos  = kwargs['texture_coords']
+        b1, b2, b3 = kwargs['barycentricCoords']
+        texXPos, texYPos  = kwargs['textureCoords']
         textureColor = obj.activeTexture.getTextureColor(texXPos, texYPos)
-        normalA, normalB, normalC = kwargs['varying_normals']
+        normalA, normalB, normalC = kwargs['varyingNormals']
         intensityPointA, intensityPointB, intensityPointC = [
             dotProduct(normal, vertex3(0,0,kwargs['intensity'])) for normal in (normalA, normalB, normalC)
         ]
@@ -609,3 +606,52 @@ class Bitmap(object):
             )
         except: 
             pass
+    
+    def drawStars(self): 
+        for x in range(self.viewPortWidth): 
+            for y in range(self.viewPortHeight): 
+                if (998 < randint(0,1000)): 
+                   self.vertex(self.getNormXCoord(x), self.getNormYCoord(y), getColor(255,255,255))
+
+
+     #structure image file 
+    def writeFile(self):
+        f = open(self.filename, "wb")
+        # estandar
+        f.write(char('B'))
+        f.write(char('M'))
+        # file size
+        f.write(dword(14 + 40 + self.width * self.height * 3))
+        # reserved
+        f.write(dword(0))
+        # data offset
+        f.write(dword(54))
+        # header size
+        f.write(dword(40))
+        # width
+        f.write(dword(self.width))
+        # height
+        f.write(dword(self.height))
+        # planes
+        f.write(word(1))
+        # bits per pixel
+        f.write(word(24))
+        # compression
+        f.write(dword(0))
+        # image size
+        f.write(dword(self.width * self.height * 3))
+        # x pixels per meter
+        f.write(dword(0))
+        # y pixels per meter
+        f.write(dword(0))
+        # number of colors
+        f.write(dword(0))
+        # important colors
+        f.write(dword(0))
+        # image data
+        for x in range(self.height):
+            for y in range(self.width):
+                f.write(self.framebuffer[x][y])
+        # close file
+        f.close()
+    
