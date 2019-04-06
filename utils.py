@@ -1,116 +1,117 @@
+from collections import namedtuple
 import numpy as np
 import math
-from collections import namedtuple
 
 vertex2 = namedtuple('Point2', ['x', 'y'])
 vertex3 = namedtuple('Point3', ['x', 'y', 'z'])
-outsideP = -1, -1, -1
+pointP = -1, -1, -1
 
-def sum(v0, v1):
-  return vertex3(v0.x + v1.x, v0.y + v1.y, v0.z + v1.z)
+def sum(v1, v2):
+    return vertex3(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z)
 
-def sub(v0, v1):
-  return vertex3(v0.x - v1.x, v0.y - v1.y, v0.z - v1.z)
+def sub(v1, v2):
+    return vertex3(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z)
 
-def scalarMul(v0, k):
-  return vertex3(v0.x * k, v0.y * k, v0.z *k)
+def scalarMult(v1, k):
+    return vertex3(v1.x * k, v1.y * k, v1.z *k)
 
-def dotProduct(v0, v1):
-  return v0.x * v1.x + v0.y * v1.y + v0.z * v1.z
+def dotProduct(v1, v2):
+    return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z
 
-def crossProduct(v0, v1):
-  return vertex3(
-    v0.y * v1.z - v0.z * v1.y,
-    v0.z * v1.x - v0.x * v1.z,
-    v0.x * v1.y - v0.y * v1.x,
-  )
+def crossProduct(v1, v2):
+    return vertex3(
+        v1.y * v2.z - v1.z * v2.y, 
+        v1.z * v2.x - v1.x * v2.z, 
+        v1.x * v2.y - v1.y * v2.x
+    )
 
-def length(v0):
-  return (v0.x**2 + v0.y**2 + v0.z**2)**0.5
+def vecLength(v1):
+    return (v1.x**2 + v1.y**2 + v1.z**2)**0.5
 
-def normProduct(v0):
-  v0length = length(v0)
+def vectorNormal(v1):
+    length = vecLength(v1)
 
-  if not v0length:
-    return vertex3(0, 0, 0)
-
-  return vertex3(v0.x/v0length, v0.y/v0length, v0.z/v0length)
-
+    if not length:
+        return vertex3(0, 0, 0)
+    else:
+        return vertex3(v1.x/length, v1.y/length, v1.z/length)
 #Ingreso de A , B , C en formato de vertices 
 def boundingBox(*vertices):
-  xCoords = [ v.x for v in vertices ]
-  yCoords = [ v.y for v in vertices ]
-  xCoords.sort()
-  yCoords.sort()
+    xCoords = [ v.x for v in vertices ]
+    yCoords = [ v.y for v in vertices ]
+    xCoords.sort()
+    yCoords.sort()
 
-  return vertex2(xCoords[0], yCoords[0]), vertex2(xCoords[-1], yCoords[-1])
+    return vertex2(xCoords[0], yCoords[0]), vertex2(xCoords[-1], yCoords[-1])
 
 # vertex = v 
 # translate = t 
 # scale = s 
 def transform(v, t=(0,0,0), s=(1,1,1)):
-# retorna el vertex 3 trasladado y transformado 
-  partA = round((v[0] + t[0]) * s[0])
-  partB = round((v[1] + t[1]) * s[1])
-  partC = round((v[2] + t[2]) * s[2])
-  
-  return vertex3(partA, partB , partC)
+    # retorna el vertex 3 trasladado y transformado 
+    param1 = round((v[0] + t[0]) * s[0])
+    param2 = round((v[1] + t[1]) * s[1])
+    param3 = round((v[2] + t[2]) * s[2])
+    return vertex3(param1, param2, param3 )
 
-def matrixTransform(v, view_port, projection, view, model): 
-  augmented_v_matrix = [ [v.x], [v.y], [v.z], [1] ]
-  transformed_v_matrix = matrixMult(matrixMult(matrixMult(matrixMult(view_port, projection), view), model), augmented_v_matrix) 
-
-  transformed_v_matrix = [
-    round(transformed_v_matrix[0][0] / transformed_v_matrix[3][0]),
-    round(transformed_v_matrix[1][0] / transformed_v_matrix[3][0]),
-    round(transformed_v_matrix[2][0] / transformed_v_matrix[3][0])
-  ] 
-  return vertex3(*transformed_v_matrix) 
-
-def matrixMult(A,B): 
-  result = [
-    [0, 0, 0, 0],
-    [0, 0, 0, 0],
-    [0, 0, 0, 0],
-    [0, 0, 0, 0] 
-  ]
-
-  for i in range(len(A)):
-    for j in range(len(B[0])):
-      for k in range(len(B)): 
-        result[i][j] += A[i][k] * B[k][j]
-  
-  return result
-
-def barycentric(A, B, C, P): 
-  bary = crossProduct(
-    vertex3(C.x - A.x, B.x - A.x, A.x - P.x), 
-    vertex3(C.y - A.y, B.y - A.y, A.y - P.y)
-  )
-
-  if abs(bary[2]) < 1:
-    return outsideP
-  
-  return (
-    1 - (bary[0] + bary[1]) / bary[2], 
-    bary[1] / bary[2], 
-    bary[0] / bary[2]
-  )
-
-def getBaryCoords (vector_A, vector_B, vector_C, min_bounding_box, max_bounding_box): 
-  transform = np.linalg.inv(
-    [
-      [vector_A.x, vector_B.x, vector_C.x], 
-      [vector_A.y, vector_B.y, vector_C.y], 
-      [        1,          1,          1]
-
+def matrixTransform(v, viewPort, projection, view, model):
+    augmentedVertexMatrix = [ [v.x], [v.y], [v.z], [1] ]
+    transformedVertexMatrix = matrixMult(
+        matrixMult(
+            matrixMult(
+                matrixMult(
+                    viewPort, 
+                    projection
+                ), 
+            view),
+        model), 
+        augmentedVertexMatrix
+    )    
+    transformedVertexMatrix = [
+        round(transformedVertexMatrix[0][0] / transformedVertexMatrix[3][0]),
+        round(transformedVertexMatrix[1][0] / transformedVertexMatrix[3][0]),
+        round(transformedVertexMatrix[2][0] / transformedVertexMatrix[3][0])
     ]
-  )
+    return vertex3(*transformedVertexMatrix)
 
-  boundingBoxGrid = np.mgrid[
-    min_bounding_box.x:max_bounding_box.x,
-    min_bounding_box.y:max_bounding_box.y
-  ].reshape(2,-1)
-  boundingBoxGrid = np.vstack((boundingBoxGrid, np.ones((1, boundingBoxGrid.shape[1]))))
+def matrixMult(A, B):
+    res = [
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0]
+    ]    
 
-  return np.transpose(np.dot(transform, boundingBoxGrid))
+    for i in range(len(A)):        
+        for j in range(len(B[0])):
+            for k in range(len(B)):
+                res[i][j] += A[i][k] * B[k][j]
+    return res
+
+def barycentric(vecA, vecB, vectC, P):
+    b = crossProduct(
+        vertex3(vectC.x - vecA.x, vecB.x - vecA.x, vecA.x - P.x), 
+        vertex3(vectC.y - vecA.y, vecB.y - vecA.y, vecA.y - P.y)
+    )
+
+    if abs(b[2]) < 1:
+        return pointP
+    else:
+        return (1 - (b[0] + b[1]) / b[2], b[1] / b[2], b[0] / b[2])
+
+def getBaryCoords(vecA, vecB, vectC, minBBox, maxBBox):
+    transform = np.linalg.inv(
+        [
+            [   vecA.x,      vecB.x,    vectC.x],
+            [   vecA.y,      vecB.y,    vectC.y],
+            [         1,          1,          1]
+        ]
+    )
+
+    bboxGrid = np.mgrid[
+        minBBox.x:maxBBox.x,
+        minBBox.y:maxBBox.y
+    ].reshape(2, -1)
+    bboxGrid = np.vstack((bboxGrid, np.ones((1, bboxGrid.shape[1]))))
+    
+    return np.transpose(np.dot(transform, bboxGrid))

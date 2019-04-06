@@ -1,5 +1,3 @@
-
-
 def facePosMinus1(f, b=10, value=None):
     try:
         return int(f, b) - 1
