@@ -1,49 +1,102 @@
-import libs 
-import struct
-import math
-import os 
-from libs import Bitmap
-from libs import word
-from obj import Texture
+from srLibs import Bitmap
+from textureLoader import textureLoader
+from utils import vertex3
 
-#Objet to draw 
-img = None
+GL = Bitmap('render.bmp')
 
-#Constructor 
-def glInit():
-    return None
+def setUpRenderer():
+    GL.glInit()
+    GL.glCreateWindow(1920, 1080)
+    GL.glViewPort(0, 0, 1920, 1080)
+    GL.glClear(1, 1, 1)
+    GL.glColor(1, 1, 1)
 
-#Init FrameBuffer
-def glCreateWindow(width, height):
-    global img 
-    img = Bitmap(width,height) 
+def medShot():
+    obj = 'deer/deer.obj'
+    translate = (1.5, 0.05, -0.2)
+    scale = (0.15, 0.18, 0.1)
+    rotate = (0, 0, 0)
+    intensity = 1    
+    texture = textureLoader('deer/deer.bmp')
+    print('Renderizando:   ' + obj + '\ntranslación:   ' + str(translate) + '\nescala:   ' + str(scale))
+    print('Por favor espere un momento...')
+    
+    setUpRenderer()
+    GL.glLookAt(
+        vertex3(5, 1, 0), 
+        vertex3(0, 0, 0), 
+        vertex3(0, 1, 0)
+    )
+    GL.glLoadObj(obj, translate, scale, rotate, intensity, texture)
+    GL.glFinish()
 
-#Delete actual image 
-def glClear(): 
-    img.clear()
-#Image area can draw
-def glViewPort(x,y,widht, height):
-    img.viewPort(x,y,widht, height)
+    print('Puede verlo en la carpeta como:  \'render.bmp\'')
 
-#Get Color 
-def glColor(r,g,b):
-    img.color(r,g,b)
+def dutchAngle():
+    obj = 'deer/deer.obj'
+    translate = (0, 0, 0)
+    scale = (0.08, 0.16, 0.1)
+    rotate = (0, 0, 0)
+    intensity = 1    
+    texture = textureLoader('deer/deer.bmp')
+    print('Renderizando:   ' + obj + '\ntranslación:   ' + str(translate) + '\nescala:   ' + str(scale))
+    print('Por favor espere un momento...')
 
-#Init canvas with new color 
-def glClearColor(r,g,b):
-    img.clearColor(0,0,0) 
+    setUpRenderer()
+    GL.glLookAt(
+        vertex3(5, 1, 0), 
+        vertex3(0, 0, 0), 
+        vertex3(0, 1, 0.13)
+    )
+    GL.glLoadObj(obj, translate, scale, rotate, intensity, texture)
+    GL.glFinish()
 
-#Get new x,y points 
-def glVertex(x,y):
-    img.vertex(x,y)
+    print('Puede verlo en la carpeta:  \'render.bmp\'')
 
-#Show new image 
-def glFinish():
-    img.display("render.bmp")
+def lowShot():
+    obj = 'deer/deer.obj'
+    translate = (0, 0, 0)
+    scale = (0.1, 0.15, 0.1)
+    rotate = (0, 0, 0)
+    intensity = 1    
+    texture = textureLoader('deer/deer.bmp')
+    print('Renderizando:   ' + obj + '\ntranslación:   ' + str(translate) + '\nescala:   ' + str(scale))
+    print('Por favor espere un momento...')
+    
+    setUpRenderer()
+    GL.glLookAt(
+        vertex3(10, -6.5, 5), 
+        vertex3(0, -0.2, 0), 
+        vertex3(0, 1, 0)
+    )
+    GL.glLoadObj(obj, translate, scale, rotate, intensity, texture)
+    GL.glFinish()
 
-glCreateWindow(800,600)
-glViewPort(0,0,799,599)
-glClear()
-t = Texture('textura.bmp')
-img.load('mono.obj' ,  (0.5, 0.5, 0.5), (500, 500, 500), texture=t) 
-glFinish()
+    print('Puede verlo en la carpeta:  \'render.bmp\'')
+
+def highShot():
+    obj = 'deer/deer.obj'
+    translate = (0, 0, 0)
+    scale = (0.1, 0.15, 0.1)
+    rotate = (0, 0, 0)
+    intensity = 1    
+    texture = textureLoader('deer/deer.bmp')
+    print('Renderizando:   ' + obj + '\ntranslación:   ' + str(translate) + '\nescala:   ' + str(scale))
+    print('Por favor espere un momento...')
+    
+    setUpRenderer()
+    GL.glLookAt(
+        vertex3(10, 25, 28), 
+        vertex3(0, -0.2, 0), 
+        vertex3(0, 1, 0)
+    )
+    GL.glLoadObj(obj, translate, scale, rotate, intensity, texture)
+    GL.glFinish()
+
+    print('Puede verlo en la carpeta:  \'render.bmp\'')
+
+
+#medShot()
+#dutchAngle()
+lowShot()
+#highShot()
