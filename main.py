@@ -41,6 +41,28 @@ def scene():
     print('Renderizando (Objeto 2):   ' + obj)
 
     GL.glLoadObj(obj, translate, scale, rotate, intensity, texture)
+
+     # roca (objeto 3)
+    obj = 'stone/stone.obj'
+    translate = (0.60, -1.2, 0)
+    scale = (0.1, 0.15, 0.1)
+    rotate = (0, 0, 0)
+    intensity = 1    
+    texture = textureLoader('stone/stone.bmp')
+    print('Renderizando (Objeto 3):   ' + obj)
+
+    GL.glLoadObj(obj, translate, scale, rotate, intensity, texture)
+
+     # roca (objeto 3)
+    obj = 'stone/stone.obj'
+    translate = (0.70, -1.1, 0)
+    scale = (0.1, 0.15, 0.1)
+    rotate = (0, 0, 0)
+    intensity = 1    
+    texture = textureLoader('stone/stone.bmp')
+    print('Renderizando (Objeto 3):   ' + obj)
+
+    GL.glLoadObj(obj, translate, scale, rotate, intensity, texture)
     
     # roca (objeto 3)
     obj = 'stone/stone.obj'
@@ -86,19 +108,6 @@ def scene():
     
     GL.glLoadObj(obj, translate, scale, rotate, intensity, texture)
 
-  
-  
-
-
-  
-  
-
-   
-
-  
-  
-  
-   
     GL.glFinish()
 
     print('Puede revisar la escena final en:  \'render.bmp\'')
