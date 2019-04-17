@@ -16,7 +16,7 @@ class Bitmap(object):
 
     def glInit(self):
         self.framebuffer = []
-        self.newGLColor = color(255, 255, 255)
+        self.newGLColor = color(250, 214, 165)
         self.glInitTexture()
         self.activeShader = self.glSetGouradShader
         self.activeShaderNoTexture = self.glSetGouradShaderNoTexture
@@ -424,8 +424,7 @@ class Bitmap(object):
 
                     colourGrey = self.activeShaderNoTexture(
                         self,                        
-                        barycentricCoords=(b1, b2, b3),     
-                        posCoords=(x, y),   
+                        barycentricCoords=(b1, b2, b3),       
                         varyingNormals=(normalA, normalB, normalC),
                         intensity=intensity
                     )
@@ -436,17 +435,9 @@ class Bitmap(object):
                             self.zBuffer[y][x] = z
                     except:
                         pass
-
-    def createStarsInCanva(self):
-        for x in range(self.viewportWidth):
-            for y in range(self.viewportHeight):
-                if (998 < randint(0, 1000)):
-                    self.glVertex(self.getNormXCoord(x), self.getNormYCoord(y), color(255,255,255))
-
-
+                        
     def glSetGouradShaderNoTexture(self, obj, **kwargs):
         b1, b2, b3 = kwargs['barycentricCoords']        
-        x, y = kwargs['posCoords']
         normalA, normalB, normalC = kwargs['varyingNormals']
 
         normX = normalA.x * b1 + normalB.x * b2 + normalC.x * b3
@@ -455,7 +446,7 @@ class Bitmap(object):
 
         vect = vertex3(normX, normY, normZ)
 
-        textureColor = color(255, 255, 255) 
+        textureColor = color(250, 214, 165) 
         textureIntensity = dotProduct(vect, vertex3(0,0,1))
 
         try:

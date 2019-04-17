@@ -7,13 +7,11 @@ class textureLoader(object):
         self.read()
 
     def read(self):
-        # Read without BM, bmp size and zeros
         self.image = open(self.filename, 'rb')
         self.image.seek(10)
         self.header_size = struct.unpack('=l', self.image.read(4))[0]
         self.image.seek(18)
 
-        # Width, Height and pixel array
         self.width = struct.unpack("=l", self.image.read(4))[0]
         self.height = struct.unpack("=l", self.image.read(4))[0]
         self.pixels = []
