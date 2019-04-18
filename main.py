@@ -14,7 +14,7 @@ def setUpRenderer():
 def scene():
 
     setUpRenderer()
-    t = textureLoader('fondo.bmp')
+    t = textureLoader('canva/fondo.bmp')
     GL.framebuffer = t.pixels
     GL.glLookAt(
         vertex3(10, 25, 28), 
